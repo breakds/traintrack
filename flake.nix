@@ -28,6 +28,8 @@
 
         packages = [
           python-env
+          pkgs.pre-commit
+          pkgs.nodePackages.pyright
         ];
 
         shellHooks = let pythonIcon = "f3e2"; in ''
