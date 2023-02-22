@@ -7,13 +7,21 @@
     utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, ... }@inputs: inputs.utils.lib.eachSystem [
+  outputs = { self, nixpkgs, ... }@inputs: {
+    overlays.dev = (final: prev: {
+      pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+        (python-final: python-prev: {
+          libtmux = python-final.callPackage ./nix/pkgs/libtmux {};
+        })
+      ];
+    });
+  } // inputs.utils.lib.eachSystem [
     "x86_64-linux"
   ] (system:
     let pkgs = import nixpkgs {
           inherit system;
           config.allowUnfree = true;
-          overlays = [];
+          overlays = [ self.overlays.dev ];
         };
     in {
       devShells.default = let
