@@ -26,6 +26,7 @@
     in {
       devShells.default = let
         python-env = pkgs.python3.withPackages (pyPkgs: with pyPkgs; [
+          loguru
           click
           libtmux
           fastapi
