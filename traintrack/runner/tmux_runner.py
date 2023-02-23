@@ -1,10 +1,11 @@
+import socket
 import subprocess
 import libtmux
 from loguru import logger
 
-
 from traintrack.schema.agent_config import AgentConfig
 from traintrack.schema.job import JobDescription, RunJobResponse
+from traintrack.schema.status import WorkerStatus
 
 
 class TmuxRunner(object):
@@ -48,15 +49,17 @@ class TmuxRunner(object):
     def num_workers(self):
         return len(self._worker_config)
 
+    def is_worker_available(self, w: libtmux.Window) -> bool:
+        return w.panes[0].pane_current_command == "zsh"
+
     def run_job(self, job: JobDescription) -> RunJobResponse:
         # First select a worker
         pane = None
         worker_id = -1
         for i in range(self.num_workers):
             w = self.ensure_window(i)
-            p = w.panes[0]
-            if p.pane_current_command == "zsh":
-                pane = p
+            if self.is_worker_available(w):
+                pane = w.panes[0]
                 worker_id = i
                 break
         if pane is None:
@@ -70,3 +73,14 @@ class TmuxRunner(object):
         pane.send_keys(job.command, enter=True)
         return RunJobResponse(
             accepted=True)
+
+    def status(self):
+        host = socket.gethostname()
+        info = []
+        for i in range(self.num_workers):
+            w = self.ensure_window(i)
+            info.append(WorkerStatus(
+                host=host,
+                id=i,
+                available=self.is_worker_available(w)))
+        return info

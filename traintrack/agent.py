@@ -37,3 +37,9 @@ async def root():
 async def run_job(job: JobDescription):
     global runner
     return runner.run_job(job)
+
+
+@app.get("/status")
+async def status():
+    global runner
+    return runner.status()
