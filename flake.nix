@@ -28,8 +28,10 @@
         python-env = pkgs.python3.withPackages (pyPkgs: with pyPkgs; [
           click
           libtmux
-          flask
+          fastapi
           prompt-toolkit
+          uvicorn
+          pydantic
         ]);
 
         name = "traintrack";
