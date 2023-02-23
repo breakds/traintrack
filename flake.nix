@@ -28,6 +28,8 @@
         python-env = pkgs.python3.withPackages (pyPkgs: with pyPkgs; [
           click
           libtmux
+          flask
+          prompt-toolkit
         ]);
 
         name = "traintrack";
