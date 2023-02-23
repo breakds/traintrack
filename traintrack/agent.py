@@ -1,11 +1,12 @@
+import os
 import socket
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
-from traintrack.schema.agent_config import AgentConfig, WorkerConfig
+from traintrack.schema.agent_config import AgentConfig
 
-from traintrack.schema.job import JobDescription, RunJobResponse
+from traintrack.schema.job import JobDescription
 from traintrack.runner.tmux_runner import TmuxRunner
 
 
@@ -19,7 +20,20 @@ app.add_middleware(
 )
 
 
-runner = TmuxRunner(AgentConfig(workers=[WorkerConfig(gpu_id=0, gpu_type="3080")]))
+def init_runner() -> TmuxRunner:
+    # Read the path to the configuration file from an environment variable
+    config_file_path = os.environ.get("TRAINTRACK_AGENT_CONFIG")
+    if config_file_path is None:
+        raise ValueError("TRAINTRACK_AGENT_CONFIG environment variable is not set")
+
+    # Load the agent configuration from the file
+    with open(config_file_path, "r") as f:
+        agent_config = AgentConfig.parse_raw(f.read())
+
+    return TmuxRunner(agent_config)
+
+
+runner = init_runner()
 
 
 @app.on_event("startup")
