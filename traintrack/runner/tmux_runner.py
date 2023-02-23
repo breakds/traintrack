@@ -50,6 +50,8 @@ class TmuxRunner(object):
         return len(self._worker_config)
 
     def is_worker_available(self, w: libtmux.Window) -> bool:
+        # TODO(breakds): Need a more sophisticated way to check availability.
+        # The current approach is simplified and prone to race condition.
         return w.panes[0].pane_current_command == "zsh"
 
     def run_job(self, job: JobDescription) -> RunJobResponse:
