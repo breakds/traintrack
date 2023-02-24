@@ -60,10 +60,14 @@ async def status():
     return runner.status()
 
 
-if __name__ == "__main__":
+def main():
     port = os.environ.get("TRAINTRACK_AGENT_PORT")
     if port is None:
         port = 5975
     else:
         port = int(port)
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")
+    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")    
+
+
+if __name__ == "__main__":
+    main()
