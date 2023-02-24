@@ -27,8 +27,14 @@ def run_hobot_job(pane: libtmux.Pane, repo: RepoConfig, job: JobDescription):
 
     # TODO(breakds): Should I just delete the root_dir to make sure it is clean?
 
+    extra =  []
+    for key, value in job.spec.overrides.items():
+        extra.append("--conf_param")
+        extra.append(f'"_CONFIG._USER.{key}={value}"')
+        
     command = template.render(
         config=job.spec.config,
-        root_dir=root_dir)
+        root_dir=root_dir,
+        extra=" ".join(extra))
 
     pane.send_keys(command, enter=True)
