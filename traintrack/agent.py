@@ -1,6 +1,7 @@
 import os
 import socket
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
@@ -57,3 +58,12 @@ async def run_job(job: JobDescription):
 async def status():
     global runner
     return runner.status()
+
+
+if __name__ == "__main__":
+    port = os.environ.get("TRAINTRACK_AGENT_PORT")
+    if port is None:
+        port = 5975
+    else:
+        port = int(port)
+    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")
