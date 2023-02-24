@@ -2,21 +2,22 @@ from typing import Dict
 from pydantic import BaseModel
 
 
+class HobotSpec(BaseModel):
+    branch: str
+    config: str
+    overrides: Dict[str, str] = {}
+
+
 class JobDescription(BaseModel):
     # wandb identifiers
+    project: str
     group: str
     name: str
     notes: str | None = None
 
-    # git settings
+    # Task specification
     repo: str
-    commit: str
-
-    # command
-    command: str
-
-    # hyper params
-    override: Dict[str, str]
+    spec: HobotSpec
 
 
 # TODO(breakds): Add datetime in the response

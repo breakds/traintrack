@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 class RepoConfig(BaseModel):
     path: str
+    work_dir: str
 
 
 class WorkerConfig(BaseModel):

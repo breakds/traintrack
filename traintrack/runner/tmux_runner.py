@@ -2,6 +2,7 @@ import socket
 import subprocess
 import libtmux
 from loguru import logger
+from traintrack.runner.hobot import run_hobot_job
 
 from traintrack.schema.agent_config import AgentConfig
 from traintrack.schema.job import JobDescription, RunJobResponse
@@ -71,8 +72,20 @@ class TmuxRunner(object):
                 reason="No available worker.")
 
         logger.info(f"Found available worker {worker_id}")
-        # TODO(breakds): cd to the directory and handle repo
-        pane.send_keys(job.command, enter=True)
+
+        if job.repo == "Hobot":
+            repo_config = self._worker_config[worker_id].repos[job.repo]
+            run_hobot_job(
+                pane,
+                repo=repo_config,
+                job=job)
+        else:
+            logger.error(f"Invalid job repo '{job.repo}'")
+            return RunJobResponse(
+                accepted=False,
+                reason=f"Invalid job repo '{job.repo}'")
+
+        
         return RunJobResponse(
             accepted=True)
 
