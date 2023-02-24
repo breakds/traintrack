@@ -22,6 +22,8 @@
           traintrack = python-final.callPackage ./nix/pkgs/traintrack {};
         })
       ];
+
+      traintrack = with final.python3Packages; toPythonApplication traintrack;
     });
   } // inputs.utils.lib.eachSystem [
     "x86_64-linux"
@@ -63,6 +65,6 @@
         '';
       };
 
-      packages.traintrack = pkgs.python3Packages.traintrack;
+      packages.traintrack = pkgs.traintrack;
     });
 }
