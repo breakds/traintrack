@@ -44,7 +44,7 @@ async def on_startup():
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"status": "running"}
 
 
 @app.post("/run")
