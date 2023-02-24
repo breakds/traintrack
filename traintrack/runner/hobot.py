@@ -19,6 +19,9 @@ def run_hobot_job(pane: libtmux.Pane, repo: RepoConfig, job: JobDescription):
     pane.send_keys(f"git reset --hard HEAD", enter=True)
     pane.send_keys(f"git fetch --all", enter=True)
     pane.send_keys(f"git switch {job.spec.branch}", enter=True)
+    pane.send_keys(f"git pull", enter=True)
+    while pane.pane_current_command != "zsh":
+        time.sleep(1)
     env = Environment()
     template = env.from_string(_RUN_COMMAND)
 
