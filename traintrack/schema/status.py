@@ -10,3 +10,7 @@ class WorkerStatus(BaseModel):
 
 class AgentStatus(BaseModel):
     workers: List[WorkerStatus]
+
+
+class ListWorkersResponse(BaseModel):
+    workers: List[WorkerStatus]
