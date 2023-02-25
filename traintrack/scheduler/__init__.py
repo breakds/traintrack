@@ -52,6 +52,8 @@ class CentralScheduler(object):
         self._queue = deque()
         self._lock = threading.Lock()
 
+        self._agent_blacklist = set()
+
     def fetch_get(self, end_point: EndPointConfig, api: str) -> str | None:
         with ssh_client(end_point) as ssh:
             if ssh is None:
@@ -106,6 +108,8 @@ class CentralScheduler(object):
             for agent in self._config.agents:
                 if len(self._queue) == 0:
                     break
+                if agent.name in self._agent_blacklist:
+                    continue
                 response = self.fetch_get(agent, "status")
                 if response is None:
                     logger.warning(f"Agent {agent.name} is unreachable.")
@@ -147,3 +151,14 @@ class CentralScheduler(object):
             for i in range(len(self._queue)):
                 result.append(self._queue[i])
             return result
+
+    def disable_agent(self, agent_name: str):
+        self._agent_blacklist.add(agent_name)
+
+    def enable_agent(self, agent_name: str):
+        if agent_name in self._agent_blacklist:
+            self._agent_blacklist.remove(agent_name)
+
+    @property
+    def agent_blacklist(self) -> List[str]:
+        return list(self._agent_blacklist)

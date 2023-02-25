@@ -57,6 +57,25 @@ def list_jobs():
     return scheduler.list_jobs()
 
 
+@app.get("/disable/{agent_name}")
+def disable_agent(agent_name: str):
+    global scheduler
+    scheduler.disable_agent(agent_name)
+    return scheduler.agent_blacklist
+
+
+@app.get("/enable/{agent_name}")
+def enable_agent(agent_name: str):
+    global scheduler
+    scheduler.enable_agent(agent_name)
+    return scheduler.agent_blacklist
+
+@app.get("/blacklist")
+def agent_blacklist():
+    global scheduler
+    return scheduler.agent_blacklist
+
+
 def main():
     port = os.environ.get("TRAINTRACK_CENTRAL_PORT")
     if port is None:
