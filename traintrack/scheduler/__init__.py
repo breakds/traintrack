@@ -1,8 +1,8 @@
 import os
 from typing import List
 from contextlib import contextmanager
-import asyncio
 from collections import deque
+import threading
 
 import paramiko
 from loguru import logger
@@ -50,7 +50,7 @@ class CentralScheduler(object):
             )
         self._config = CentralConfig.parse_file(config_file_path)
         self._queue = deque()
-        self._event_loop = asyncio.new_event_loop()
+        self._lock = threading.Lock()
 
     def fetch_get(self, end_point: EndPointConfig, api: str) -> str | None:
         with ssh_client(end_point) as ssh:
@@ -101,53 +101,49 @@ class CentralScheduler(object):
         in order to be thread safe.
 
         """
-        scheduled = 0
-        for agent in self._config.agents:
-            if len(self._queue) == 0:
-                break
-            response = self.fetch_get(agent, "status")
-            if response is None:
-                logger.warning(f"Agent {agent.name} is unreachable.")
-                continue
-            agent_status = AgentStatus.parse_raw(response)
-            count = 0
-            for w in agent_status.workers:
-                if w.available:
-                    count += 1
-            logger.info(f"Agent {agent.name} has {count} / {len(agent_status.workers)} "
-                        "available.")
-            while count > 0 and len(self._queue) > 0:
-                job = self._queue.pop()
-                response = self.fetch_post(agent, "run", payload=job.json())
+        with self._lock:
+            scheduled = 0
+            for agent in self._config.agents:
+                if len(self._queue) == 0:
+                    break
+                response = self.fetch_get(agent, "status")
                 if response is None:
                     logger.warning(f"Agent {agent.name} is unreachable.")
-                    break
-                response = RunJobResponse.parse_raw(response)
-                if not response.accepted:
-                    logger.warning(f"Agent {agent.name} refuse to run job "
-                                   f"{job.group}.{job.name}. Reason: {response.reason}")
-                    break
-                logger.success(f"Job {job.group}.{job.name} scheduled to "
-                               f"run on {agent.name}.")
-                scheduled += 1
-                count = count - 1
-            if scheduled > 0:
-                logger.success(f"Successfully scheduled {scheduled} jobs.")
+                    continue
+                agent_status = AgentStatus.parse_raw(response)
+                count = 0
+                for w in agent_status.workers:
+                    if w.available:
+                        count += 1
+                logger.info(f"Agent {agent.name} has {count} / {len(agent_status.workers)} "
+                            "available.")
+                while count > 0 and len(self._queue) > 0:
+                    job = self._queue.pop()
+                    response = self.fetch_post(agent, "run", payload=job.json())
+                    if response is None:
+                        logger.warning(f"Agent {agent.name} is unreachable.")
+                        break
+                    response = RunJobResponse.parse_raw(response)
+                    if not response.accepted:
+                        logger.warning(f"Agent {agent.name} refuse to run job "
+                                       f"{job.group}.{job.name}. Reason: {response.reason}")
+                        break
+                    logger.success(f"Job {job.group}.{job.name} scheduled to "
+                                   f"run on {agent.name}.")
+                    scheduled += 1
+                    count = count - 1
+                if scheduled > 0:
+                    logger.success(f"Successfully scheduled {scheduled} jobs.")
 
     def enqueue(self, job: JobDescription) -> bool:
-        async def _enqueue():
+        with self._lock:
             self._queue.appendleft(job)
-            self._try_schedule()
-        self._event_loop.run_until_complete(_enqueue())
+        self._try_schedule()
         return True
 
-    def try_schedule(self):
-        self._event_loop.call_soon_threadsafe(self._try_schedule)
-
     def list_jobs(self) -> List[JobDescription]:
-        result = []
-        async def _list_jobs():
+        with self._lock:
+            result = []
             for i in range(len(self._queue)):
                 result.append(self._queue[i])
-        self._event_loop.run_until_complete(_list_jobs())
-        return result
+            return result

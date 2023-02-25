@@ -1,14 +1,14 @@
 import os
 import socket
-from typing import List
+import asyncio
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
+
 from traintrack.scheduler import CentralScheduler
 from traintrack.schema.job import JobDescription
-
 from traintrack.schema.status import ListWorkersResponse
 
 
@@ -27,6 +27,12 @@ scheduler = CentralScheduler()
 
 @app.on_event("startup")
 def on_startup():
+    async def _periodic_try_schedule():
+        global scheduler
+        while True:
+            scheduler._try_schedule()
+            await asyncio.sleep(5)
+    asyncio.create_task(_periodic_try_schedule())
     logger.success(f"Traintrack central started on {socket.gethostname()}.")
 
 

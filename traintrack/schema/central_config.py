@@ -15,3 +15,4 @@ class EndPointConfig(BaseModel):
 
 class CentralConfig(BaseModel):
     agents: List[EndPointConfig] = []
+    schedule_interval: int = 5
