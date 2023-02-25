@@ -15,4 +15,5 @@ class EndPointConfig(BaseModel):
 
 class CentralConfig(BaseModel):
     agents: List[EndPointConfig] = []
+    default_blacklist: List[str] = []
     schedule_interval: int = 30

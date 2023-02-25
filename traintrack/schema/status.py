@@ -5,6 +5,7 @@ from pydantic import BaseModel
 class WorkerStatus(BaseModel):
     host: str
     id: int
+    gpu_type: str
     available: bool
 
 

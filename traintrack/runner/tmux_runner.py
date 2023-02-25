@@ -87,6 +87,10 @@ class TmuxRunner(object):
         for i in range(self.num_workers):
             w = self.ensure_window(i)
             workers.append(
-                WorkerStatus(host=host, id=i, available=self.is_worker_available(w))
+                WorkerStatus(
+                    host=host,
+                    id=i,
+                    gpu_type=self._worker_config[i].gpu_type,
+                    available=self.is_worker_available(w))
             )
         return AgentStatus(workers=workers)

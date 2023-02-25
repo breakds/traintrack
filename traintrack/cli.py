@@ -84,6 +84,7 @@ def workers():
     table = Table(title="All Workers")
     table.add_column("Agent", justify="right", no_wrap=True)
     table.add_column("Worker", justify="left", style="magenta", no_wrap=True)
+    table.add_column("GPU", justify="left", style="cornflower_blue", no_wrap=True)
     table.add_column("Status", justify="full", no_wrap=True)
 
     for w in worker_list.workers:
@@ -93,7 +94,7 @@ def workers():
         agent = f"[yellow]{w.host}"
         if w.host in blacklist:
             agent = f"{w.host} (disabled)"
-        table.add_row(agent, f"{w.id}", status)
+        table.add_row(agent, f"{w.id}", w.gpu_type, status)
     console = Console()
     console.print(table)
 
@@ -108,7 +109,7 @@ def jobs():
     table = Table(title="All Jobs")
     table.add_column("Project", no_wrap=True)
     table.add_column("Group", no_wrap=True)
-    table.add_column("Name", no_wrap=True)    
+    table.add_column("Name", no_wrap=True)
 
     for j in job_list:
         table.add_row(j.project, j.group, j.name)

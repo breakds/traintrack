@@ -52,7 +52,7 @@ class CentralScheduler(object):
         self._queue = deque()
         self._lock = threading.Lock()
 
-        self._agent_blacklist = set()
+        self._agent_blacklist = set(self._config.default_blacklist)
 
     def fetch_get(self, end_point: EndPointConfig, api: str) -> str | None:
         with ssh_client(end_point) as ssh:
