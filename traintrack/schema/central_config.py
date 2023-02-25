@@ -3,8 +3,14 @@ from pydantic import BaseModel
 
 
 class EndPointConfig(BaseModel):
-    uri: str
+    name: str
     port: int
+
+    ssh_uri: str
+    ssh_port: int
+    ssh_proxy: str | None
+    ssh_proxy_port: int | None
+    ssh_key_file: str
 
 
 class CentralConfig(BaseModel):

@@ -6,7 +6,7 @@ from traintrack.runner.hobot import run_hobot_job
 
 from traintrack.schema.agent_config import AgentConfig
 from traintrack.schema.job import JobDescription, RunJobResponse
-from traintrack.schema.status import WorkerStatus
+from traintrack.schema.status import WorkerStatus, AgentStatus
 
 
 class TmuxRunner(object):
@@ -29,8 +29,7 @@ class TmuxRunner(object):
                 return s
 
         logger.info("Tmux session 'traintrack_agent' does not exist. Creating one.")
-        s = self._server.new_session(
-            session_name="traintrack_agent")
+        s = self._server.new_session(session_name="traintrack_agent")
         logger.info("Tmux session 'traintrack_agent' created.")
         return s
 
@@ -67,35 +66,27 @@ class TmuxRunner(object):
                 break
         if pane is None:
             logger.info("No available worker.")
-            return RunJobResponse(
-                accepted=False,
-                reason="No available worker.")
+            return RunJobResponse(accepted=False, reason="No available worker.")
 
         logger.info(f"Found available worker {worker_id}")
 
         if job.repo == "Hobot":
             repo_config = self._worker_config[worker_id].repos[job.repo]
-            run_hobot_job(
-                pane,
-                repo=repo_config,
-                job=job)
+            run_hobot_job(pane, repo=repo_config, job=job)
         else:
             logger.error(f"Invalid job repo '{job.repo}'")
             return RunJobResponse(
-                accepted=False,
-                reason=f"Invalid job repo '{job.repo}'")
+                accepted=False, reason=f"Invalid job repo '{job.repo}'"
+            )
 
-        
-        return RunJobResponse(
-            accepted=True)
+        return RunJobResponse(accepted=True)
 
     def status(self):
         host = socket.gethostname()
-        info = []
+        workers = []
         for i in range(self.num_workers):
             w = self.ensure_window(i)
-            info.append(WorkerStatus(
-                host=host,
-                id=i,
-                available=self.is_worker_available(w)))
-        return info
+            workers.append(
+                WorkerStatus(host=host, id=i, available=self.is_worker_available(w))
+            )
+        return AgentStatus(workers=workers)

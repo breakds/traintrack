@@ -48,6 +48,8 @@
           prompt-toolkit
           uvicorn
           pydantic
+          paramiko
+          requests
         ]);
 
         name = "traintrack";

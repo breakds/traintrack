@@ -28,8 +28,7 @@ def init_runner() -> TmuxRunner:
         raise ValueError("TRAINTRACK_AGENT_CONFIG environment variable is not set")
 
     # Load the agent configuration from the file
-    with open(config_file_path, "r") as f:
-        agent_config = AgentConfig.parse_raw(f.read())
+    agent_config = AgentConfig.parse_file(config_file_path)
 
     return TmuxRunner(agent_config)
 
@@ -66,7 +65,7 @@ def main():
         port = 5975
     else:
         port = int(port)
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")    
+    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")
 
 
 if __name__ == "__main__":
