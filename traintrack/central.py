@@ -31,7 +31,7 @@ def on_startup():
         global scheduler
         while True:
             scheduler._try_schedule()
-            await asyncio.sleep(5)
+            await asyncio.sleep(scheduler._config.schedule_interval)
     asyncio.create_task(_periodic_try_schedule())
     logger.success(f"Traintrack central started on {socket.gethostname()}.")
 
