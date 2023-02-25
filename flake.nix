@@ -50,6 +50,9 @@
           pydantic
           paramiko
           requests
+          questionary
+          jinja2
+          rich
         ]);
 
         name = "traintrack";

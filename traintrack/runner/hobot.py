@@ -8,7 +8,7 @@ from traintrack.schema.job import HobotSpec, JobDescription
 
 
 _RUN_COMMAND="""
-ALF_USE_GIN=0 python -m alf.bin.train --store_snapshot=false --conf {{config}} --root_dir {{root_dir}} {{extra}}
+ALF_USE_GIN=0 python -m alf.bin.train --store_snapshot=false --conf {{config}} --root_dir {{root_dir}} --notes "{{notes}}" {{extra}}
 """
 
 def run_hobot_job(pane: libtmux.Pane, repo: RepoConfig, job: JobDescription):
@@ -38,6 +38,7 @@ def run_hobot_job(pane: libtmux.Pane, repo: RepoConfig, job: JobDescription):
     command = template.render(
         config=job.spec.config,
         root_dir=root_dir,
+        notes=job.notes,
         extra=" ".join(extra))
 
     pane.send_keys(command, enter=True)

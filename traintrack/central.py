@@ -1,6 +1,7 @@
 import os
 import socket
 import asyncio
+from typing import List
 
 import uvicorn
 from fastapi import FastAPI
@@ -52,7 +53,7 @@ def enqueue_job(job: JobDescription):
 
 
 @app.get("/jobs")
-def list_jobs():
+def list_jobs() -> List[JobDescription]:
     global scheduler
     return scheduler.list_jobs()
 
