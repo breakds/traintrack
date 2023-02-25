@@ -6,6 +6,11 @@
 , prompt-toolkit
 , uvicorn
 , pydantic
+, paramiko
+, requests
+, questionary
+, jinja2
+, rich
 }:
 
 buildPythonPackage {
@@ -21,6 +26,11 @@ buildPythonPackage {
     prompt-toolkit
     uvicorn
     pydantic
+    paramiko
+    requests
+    questionary
+    jinja2
+    rich
   ];
 
   doCheck = false;

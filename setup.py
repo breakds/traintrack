@@ -8,6 +8,7 @@ setup(
         'console_scripts': [
             'agent=traintrack.agent:main',
             'central=traintrack.central:main',
+            'traintrack=traintrack.cli:cli',
         ],
     },
     install_requires=[
@@ -17,5 +18,10 @@ setup(
         "prompt-toolkit",
         "uvicorn",
         "pydantic",
+        "paramiko",
+        "requests",
+        "questionary",
+        "jinja2",
+        "rich",
     ],
 )
