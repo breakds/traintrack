@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from traintrack.scheduler import CentralScheduler
+from traintrack.schema.job import JobDescription
 
 from traintrack.schema.status import ListWorkersResponse
 
@@ -25,14 +26,29 @@ scheduler = CentralScheduler()
 
 
 @app.on_event("startup")
-async def on_startup():
+def on_startup():
     logger.success(f"Traintrack central started on {socket.gethostname()}.")
 
 
 @app.get("/workers")
-async def list_workers() -> ListWorkersResponse:
+def list_workers() -> ListWorkersResponse:
     global scheduler
     return ListWorkersResponse(workers=scheduler.list_workers())
+
+
+@app.post("/enqueue")
+def enqueue_job(job: JobDescription):
+    global scheduler
+    success = scheduler.enqueue(job)
+    return {
+        "success": success
+    }
+
+
+@app.get("/jobs")
+def list_jobs():
+    global scheduler
+    return scheduler.list_jobs()
 
 
 def main():

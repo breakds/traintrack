@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 from pydantic import BaseModel
 
 
@@ -18,6 +18,10 @@ class JobDescription(BaseModel):
     # Task specification
     repo: str
     spec: HobotSpec
+
+
+class JobList(BaseModel):
+    jobs: List[JobDescription]
 
 
 # TODO(breakds): Add datetime in the response
