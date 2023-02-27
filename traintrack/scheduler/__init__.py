@@ -87,6 +87,14 @@ class CentralScheduler(object):
     def list_workers(self) -> List[WorkerStatus]:
         workers = []
         for agent in self._config.agents:
+            if agent.name in self._agent_blacklist:
+                # TODO(breakds): This is just a temporary solution.
+                workers.append(WorkerStatus(
+                    host=agent.name,
+                    id=-1,
+                    gpu_type="N/A",
+                    available=False))
+                continue
             response = self.fetch_get(agent, "status")
             if response is None:
                 logger.warning(f"Agent {agent.name} is unreachable.")

@@ -71,6 +71,7 @@ def enable_agent(agent_name: str):
     scheduler.enable_agent(agent_name)
     return scheduler.agent_blacklist
 
+
 @app.get("/blacklist")
 def agent_blacklist():
     global scheduler
