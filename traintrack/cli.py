@@ -94,6 +94,7 @@ def workers():
         agent = f"[yellow]{w.host}"
         if w.host in blacklist:
             agent = f"{w.host} (disabled)"
+            status = "N/A"
         table.add_row(agent, f"{w.id}", w.gpu_type, status)
     console = Console()
     console.print(table)
