@@ -1,6 +1,5 @@
 from jinja2 import Environment
 import questionary
-from traintrack.central import agent_blacklist
 
 from traintrack.schema.job import JobRequest
 
