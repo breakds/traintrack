@@ -1,38 +1,48 @@
 from jinja2 import Environment
 import questionary
+from traintrack.central import agent_blacklist
 
-from traintrack.schema.job import JobDescription
+from traintrack.schema.job import JobRequest
 
 
 _JOB_TEMPLATE = """
 {
-  "project": "{{project}}",
-  "group": "{{group}}",
-  "name": "{{name}}",
-  "notes": "{{notes}}",
-  "repo": "Hobot",
-  "spec": {
-    "branch": "{{branch}}",
-    "config": "{{config_path}}",
-    "overrides": {
-      {% for key, value in overrides.items() -%}
-      "{{key}}": "{{value}}"{% if not loop.last %},{% endif %}
-      {% endfor -%}
+  "job": {
+    "project": "{{project}}",
+    "group": "{{group}}",
+    "name": "{{name}}",
+    "notes": "{{notes}}",
+    "repo": "Hobot",
+    "spec": {
+      "branch": "{{branch}}",
+      "config": "{{config_path}}",
+      "overrides": {
+        {% for key, value in overrides.items() -%}
+        "{{key}}": "{{value}}"{% if not loop.last %},{% endif %}
+        {% endfor -%}
+      }
     }
-  }
+  },
+  "agent_blacklist": [
+    {% for agent_name in agent_blacklist -%}
+    "{{agent_name}}"{% if not loop.last %},{% endif %}
+    {% endfor -%}
+  ]
 }
 """
 
 
-def prompt_for_locomotion_job() -> JobDescription | None:
+def prompt_for_locomotion_job() -> JobRequest | None:
     try:
         # Ask the user for the project name
-        project = questionary.text("What is the project name?",
-                                   default="ppg_whole_body").unsafe_ask()
+        project = questionary.text(
+            "What is the project name?", default="ppg_whole_body"
+        ).unsafe_ask()
 
         # Ask the user for the group name
-        group = questionary.text("What is the group name?",
-                                 default="locomotion").unsafe_ask()
+        group = questionary.text(
+            "What is the group name?", default="locomotion"
+        ).unsafe_ask()
 
         # Ask the user for the job name
         name = questionary.text("What is the job name?").unsafe_ask()
@@ -41,21 +51,39 @@ def prompt_for_locomotion_job() -> JobDescription | None:
         notes = questionary.text("Enter job notes").unsafe_ask()
 
         # Ask the user for the branch name
-        branch = questionary.text("What is the branch name?",
-                                  default="experiment/closing_gap").unsafe_ask()
+        branch = questionary.text(
+            "What is the branch name?", default="experiment/closing_gap"
+        ).unsafe_ask()
 
         # Ask the user for the config as JSON
-        config_path = questionary.text("Enter the config path",
-                                  default="hobot/locomotion/low_level/ppg_whole_body_conf.py").unsafe_ask()
+        config_path = questionary.text(
+            "Enter the config path",
+            default="hobot/locomotion/low_level/ppg_whole_body_conf.py",
+        ).unsafe_ask()
 
         # Ask the user for overrides
         overrides = {}
         while True:
-            key = questionary.text("Enter override key (leave blank to finish)").unsafe_ask()
+            key = questionary.text(
+                "Enter override key (leave blank to finish)"
+            ).unsafe_ask()
             if not key:
                 break
             value = questionary.text("Enter override value").unsafe_ask()
             overrides[key] = value
+
+        # TODO(breakds): Should not hard code here.
+        agent_blacklist = questionary.checkbox(
+            "Blacklist the following agents",
+            choices=[
+                "gail3",
+                "samaritan",
+                "lothric",
+                "lorian",
+                "octavian",
+                "malenia",
+            ],
+        ).unsafe_ask()
 
         env = Environment()
         template = env.from_string(_JOB_TEMPLATE)
@@ -67,7 +95,8 @@ def prompt_for_locomotion_job() -> JobDescription | None:
             branch=branch,
             config_path=config_path,
             overrides=overrides,
+            agent_blacklist=agent_blacklist,
         )
-        return JobDescription.parse_raw(json)
+        return JobRequest.parse_raw(json)
     except KeyboardInterrupt:
         return None

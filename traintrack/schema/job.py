@@ -20,6 +20,12 @@ class JobDescription(BaseModel):
     spec: HobotSpec
 
 
+class JobRequest(BaseModel):
+    job: JobDescription
+    # Do not use agents from this list for this job
+    agent_blacklist: List[str] = []
+
+
 class JobList(BaseModel):
     jobs: List[JobDescription]
 

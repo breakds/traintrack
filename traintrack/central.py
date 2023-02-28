@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from traintrack.scheduler import CentralScheduler
-from traintrack.schema.job import JobDescription
+from traintrack.schema.job import JobDescription, JobRequest
 from traintrack.schema.status import ListWorkersResponse
 
 
@@ -33,6 +33,7 @@ def on_startup():
         while True:
             scheduler._try_schedule()
             await asyncio.sleep(scheduler._config.schedule_interval)
+
     asyncio.create_task(_periodic_try_schedule())
     logger.success(f"Traintrack central started on {socket.gethostname()}.")
 
@@ -44,16 +45,14 @@ def list_workers() -> ListWorkersResponse:
 
 
 @app.post("/enqueue")
-def enqueue_job(job: JobDescription):
+def enqueue_job(job: JobRequest):
     global scheduler
     success = scheduler.enqueue(job)
-    return {
-        "success": success
-    }
+    return {"success": success}
 
 
 @app.get("/jobs")
-def list_jobs() -> List[JobDescription]:
+def list_jobs() -> List[JobRequest]:
     global scheduler
     return scheduler.list_jobs()
 

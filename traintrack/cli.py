@@ -10,7 +10,7 @@ import questionary
 import requests
 from rich.table import Table
 from rich.console import Console
-from traintrack.schema.job import JobDescription
+from traintrack.schema.job import JobRequest
 
 from traintrack.schema.status import ListWorkersResponse
 from traintrack.templates.hobot import prompt_for_locomotion_job
@@ -21,8 +21,9 @@ PORT = os.environ.get("TRAINTRACK_CENTRAL_PORT") or 5976
 
 def fetch(command: str, payload: BaseModel | None = None):
     if payload is not None:
-        response = requests.post(f"http://localhost:{PORT}/{command}",
-                                 json=payload.dict())
+        response = requests.post(
+            f"http://localhost:{PORT}/{command}", json=payload.dict()
+        )
     else:
         response = requests.get(f"http://localhost:{PORT}/{command}")
 
@@ -72,6 +73,7 @@ def new():
     else:
         logger.error("Job was rejected.")
 
+
 @cli.command()
 def workers():
     result = fetch("workers")
@@ -105,15 +107,18 @@ def jobs():
     result = fetch("jobs")
     if result is None:
         return
-    job_list = pydantic.parse_obj_as(List[JobDescription], result)
+    job_list = pydantic.parse_obj_as(List[JobRequest], result)
 
     table = Table(title="All Jobs")
     table.add_column("Project", no_wrap=True)
     table.add_column("Group", no_wrap=True)
     table.add_column("Name", no_wrap=True)
+    table.add_column("Agent Blacklist", no_wrap=True)
 
     for j in job_list:
-        table.add_row(j.project, j.group, j.name)
+        table.add_row(
+            j.job.project, j.job.group, j.job.name, ", ".join(j.agent_blacklist)
+        )
     console = Console()
     console.print(table)
 

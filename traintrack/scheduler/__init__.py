@@ -8,7 +8,7 @@ import paramiko
 from loguru import logger
 
 from traintrack.schema.central_config import CentralConfig, EndPointConfig
-from traintrack.schema.job import JobDescription, RunJobResponse
+from traintrack.schema.job import JobRequest, RunJobResponse
 from traintrack.schema.status import AgentStatus, WorkerStatus
 
 
@@ -68,7 +68,9 @@ class CentralScheduler(object):
                 result.append(line)
             return "".join(result)
 
-    def fetch_post(self, end_point: EndPointConfig, api: str, payload: str) -> str | None:
+    def fetch_post(
+        self, end_point: EndPointConfig, api: str, payload: str
+    ) -> str | None:
         with ssh_client(end_point) as ssh:
             if ssh is None:
                 return None
@@ -89,11 +91,11 @@ class CentralScheduler(object):
         for agent in self._config.agents:
             if agent.name in self._agent_blacklist:
                 # TODO(breakds): This is just a temporary solution.
-                workers.append(WorkerStatus(
-                    host=agent.name,
-                    id=-1,
-                    gpu_type="N/A",
-                    available=False))
+                workers.append(
+                    WorkerStatus(
+                        host=agent.name, id=-1, gpu_type="N/A", available=False
+                    )
+                )
                 continue
             response = self.fetch_get(agent, "status")
             if response is None:
@@ -104,6 +106,12 @@ class CentralScheduler(object):
 
         return workers
 
+    def find_agent_by_name(self, name: str):
+        for agent in self._config.agents:
+            if agent.name == name:
+                return agent
+        raise KeyError(f"Cannot find agent with name '{name}'.")
+
     def _try_schedule(self):
         """Query all the agents and schedule jobs if possible.
 
@@ -111,49 +119,68 @@ class CentralScheduler(object):
         in order to be thread safe.
 
         """
+        # First scan all the agents and get the number of available workers on
+        # each agent.
+        worker_count = {}
+        for agent in self._config.agents:
+            if agent.name in self._agent_blacklist:
+                continue
+            response = self.fetch_get(agent, "status")
+            if response is None:
+                logger.warning(f"Agent {agent.name} is unreachable.")
+                continue
+            count = 0
+            agent_status = AgentStatus.parse_raw(response)
+            for w in agent_status.workers:
+                if w.available:
+                    count += 1
+            worker_count[agent.name] = count
+
         with self._lock:
-            scheduled = 0
-            for agent in self._config.agents:
-                if len(self._queue) == 0:
-                    break
-                if agent.name in self._agent_blacklist:
-                    continue
-                response = self.fetch_get(agent, "status")
-                if response is None:
-                    logger.warning(f"Agent {agent.name} is unreachable.")
-                    continue
-                agent_status = AgentStatus.parse_raw(response)
-                count = 0
-                for w in agent_status.workers:
-                    if w.available:
-                        count += 1
-                logger.info(f"Agent {agent.name} has {count} / {len(agent_status.workers)} "
-                            "available.")
-                while count > 0 and len(self._queue) > 0:
-                    job = self._queue.pop()
-                    response = self.fetch_post(agent, "run", payload=job.json())
+            scheduled = []
+            unscheduled = []
+            while len(self._queue) > 0:
+                job_req: JobRequest = self._queue.pop()  # Pop from right
+                logger.info(f"Scheduling {job_req} ...")
+                success = False
+                for agent_name, count in worker_count:
+                    if agent_name in job_req.agent_blacklist or count == 0:
+                        continue
+
+                    agent = self.find_agent_by_name(agent_name)
+                    response = self.fetch_post(agent, "run", payload=job_req.job.json())
                     if response is None:
                         logger.warning(f"Agent {agent.name} is unreachable.")
-                        break
+                        worker_count[agent_name] = 0
+                        continue
+
+                    job_name = f"{job_req.job.group}.{job_req.job.name}"
                     response = RunJobResponse.parse_raw(response)
                     if not response.accepted:
-                        logger.warning(f"Agent {agent.name} refuse to run job "
-                                       f"{job.group}.{job.name}. Reason: {response.reason}")
-                        break
-                    logger.success(f"Job {job.group}.{job.name} scheduled to "
-                                   f"run on {agent.name}.")
-                    scheduled += 1
-                    count = count - 1
-                if scheduled > 0:
-                    logger.success(f"Successfully scheduled {scheduled} jobs.")
+                        logger.warning(
+                            f"Agent {agent_name} refuse to run job "
+                            f"{job_name} - reason: {response.reason}"
+                        )
+                        continue
+                    logger.success(f"Job {job_name} scheduled to run on {agent_name}.")
+                    success = True
+                    break
 
-    def enqueue(self, job: JobDescription) -> bool:
+                if success:
+                    scheduled.append(job_req)
+                else:
+                    unscheduled.append(job_req)
+
+            for job_req in unscheduled:
+                self._queue.appendleft(job_req)  # Append from right
+
+    def enqueue(self, job: JobRequest) -> bool:
         with self._lock:
             self._queue.appendleft(job)
         self._try_schedule()
         return True
 
-    def list_jobs(self) -> List[JobDescription]:
+    def list_jobs(self) -> List[JobRequest]:
         with self._lock:
             result = []
             for i in range(len(self._queue)):
