@@ -143,7 +143,7 @@ class CentralScheduler(object):
                 job_req: JobRequest = self._queue.pop()  # Pop from right
                 logger.info(f"Scheduling {job_req} ...")
                 success = False
-                for agent_name, count in worker_count:
+                for agent_name, count in worker_count.items():
                     if agent_name in job_req.agent_blacklist or count == 0:
                         continue
 
