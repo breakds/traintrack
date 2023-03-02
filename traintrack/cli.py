@@ -13,7 +13,7 @@ from rich.console import Console
 from traintrack.schema.job import JobRequest
 
 from traintrack.schema.status import ListWorkersResponse
-from traintrack.templates.hobot import prompt_for_locomotion_job
+from traintrack.templates.hobot import prompt_for_closing_gap_job, prompt_for_whole_body_job
 
 
 PORT = os.environ.get("TRAINTRACK_CENTRAL_PORT") or 5976
@@ -44,14 +44,16 @@ def new():
     template = questionary.select(
         "Choose a template:",
         choices=[
-            {"name": "hobot.locomotion", "value": "hobot.locomotion"},
+            {"name": "hobot.closing_gap", "value": "hobot.closing_gap"},
             {"name": "hobot.whole_body", "value": "hobot.whole_body"},
         ],
     ).unsafe_ask()
 
     job = None
-    if template == "hobot.locomotion":
-        job = prompt_for_locomotion_job()
+    if template == "hobot.closing_gap":
+        job = prompt_for_closing_gap_job()
+    elif template == "hobot.whole_body":
+        job = prompt_for_whole_body_job()
     else:
         raise RuntimeError(f"I do not recognize the template '{template}")
 

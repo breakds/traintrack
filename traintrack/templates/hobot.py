@@ -31,7 +31,78 @@ _JOB_TEMPLATE = """
 """
 
 
-def prompt_for_locomotion_job() -> JobRequest | None:
+def prompt_for_closing_gap_job() -> JobRequest | None:
+    try:
+        # Ask the user for the project name
+        project = questionary.text("What is the project name?",
+                                   default="ppg_locomotion").unsafe_ask()
+
+        # Ask the user for the group name
+        group = questionary.text("What is the group name?",
+                                 default="locomotion").unsafe_ask()
+
+        # Ask the user for the job name
+        name = questionary.text("What is the job name?").unsafe_ask()
+
+        # Ask the user for job notes
+        notes = questionary.text("Enter job notes").unsafe_ask()
+
+        # Ask the user for the branch name
+        branch = questionary.text("What is the branch name?",
+                                  default="experiment/closing_gap").unsafe_ask()
+
+        # Ask the user for the config as JSON
+        config_path = questionary.text("Enter the config path",
+                                  default="hobot/locomotion/low_level/ppg_locomotion_conf.py").unsafe_ask()
+
+        # ---------- Questions on Conf Params ----------
+
+        # Robot
+        robot_make = questionary.text("Robot Make", default="unitree").unsafe_ask()
+        robot_model = questionary.text("Robot Model", default="go1").unsafe_ask()
+        name = f"{robot_model}_{name}"
+
+        # Whether enable randomization
+        enable_randomization = questionary.confirm(
+            "Do you want to enable randomization", default=True).unsafe_ask()
+
+        # The power weight
+        power_weight = questionary.text("Power Weight", default="8e-7").unsafe_ask()
+
+        # The survival reward
+        survival_reward = questionary.text("survival_reward", default="0.01").unsafe_ask()
+
+        # Ask the user for overrides
+        overrides = {
+            "enable_randomization": "True" if enable_randomization else "False",
+            "power_weight": power_weight,
+            "survival_reward": survival_reward,
+
+        }
+        while True:
+            key = questionary.text("Enter override key (leave blank to finish)").unsafe_ask()
+            if not key:
+                break
+            value = questionary.text("Enter override value").unsafe_ask()
+            overrides[key] = value
+
+        env = Environment()
+        template = env.from_string(_JOB_TEMPLATE)
+        json = template.render(
+            project=project,
+            group=group,
+            name=name,
+            notes=notes,
+            branch=branch,
+            config_path=config_path,
+            overrides=overrides,
+        )
+        return JobRequest.parse_raw(json)
+    except KeyboardInterrupt:
+        return None
+
+
+def prompt_for_whole_body_job() -> JobRequest | None:
     try:
         # Ask the user for the project name
         project = questionary.text(
