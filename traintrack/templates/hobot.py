@@ -70,15 +70,24 @@ def prompt_for_closing_gap_job() -> JobRequest | None:
         power_weight = questionary.text("Power Weight", default="8e-7").unsafe_ask()
 
         # The survival reward
-        survival_reward = questionary.text("survival_reward", default="0.01").unsafe_ask()
+        survival_reward = questionary.text("Survival reward", default="0.01").unsafe_ask()
+
+        # The initial z
+        initial_z = questionary.text("Initial z", default={
+            "anymal_b": "0.58",
+            "go1": "0.325",
+        }[robot_model]).unsafe_ask()
 
         # Ask the user for overrides
         overrides = {
             "enable_randomization": "True" if enable_randomization else "False",
             "power_weight": power_weight,
             "survival_reward": survival_reward,
-
+            "robot_make": robot_make,
+            "robot_model": robot_model,
+            "initial_robot_z": initial_z,
         }
+        
         while True:
             key = questionary.text("Enter override key (leave blank to finish)").unsafe_ask()
             if not key:
