@@ -83,8 +83,8 @@ def prompt_for_closing_gap_job() -> JobRequest | None:
             "enable_randomization": "True" if enable_randomization else "False",
             "power_weight": power_weight,
             "survival_reward": survival_reward,
-            "robot_make": robot_make,
-            "robot_model": robot_model,
+            "robot_make": f"'{robot_make}'",
+            "robot_model": f"'{robot_model}'",
             "initial_robot_z": initial_z,
         }
         
